@@ -5,6 +5,7 @@ import { Dashboard } from '@/components/Dashboard';
 import { InventoryPage } from '@/components/InventoryPage';
 import { ProductionPage } from '@/components/ProductionPage';
 import { ReportsPage } from '@/components/ReportsPage';
+import { SettingsPage } from '@/components/SettingsPage';
 import { InventoryProvider } from '@/contexts/InventoryContext';
 
 const Index = () => {
@@ -20,6 +21,8 @@ const Index = () => {
         return <ProductionPage />;
       case 'reports':
         return <ReportsPage />;
+      case 'settings':
+        return <SettingsPage />;
       default:
         return <Dashboard />;
     }

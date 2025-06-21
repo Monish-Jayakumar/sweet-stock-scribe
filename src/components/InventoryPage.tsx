@@ -5,20 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useInventory } from '@/hooks/useInventory';
-import { Plus, Package, TrendingUp, TrendingDown, Edit, Trash2 } from 'lucide-react';
+import { Plus, Package, TrendingUp, TrendingDown } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { AddMaterialForm } from './AddMaterialForm';
 
 export const InventoryPage = () => {
-  const { rawMaterials, addStock, getStockStatus, transactions, addNewMaterial, updateMaterialCost, renameMaterial, deleteMaterial } = useInventory();
+  const { rawMaterials, addStock, getStockStatus, transactions } = useInventory();
   const [selectedMaterial, setSelectedMaterial] = useState<string>('');
   const [addQuantity, setAddQuantity] = useState<number>(0);
   const [notes, setNotes] = useState<string>('');
-  const [showAddMaterial, setShowAddMaterial] = useState<boolean>(false);
-  const [editingCost, setEditingCost] = useState<string>('');
-  const [newCost, setNewCost] = useState<number>(0);
-  const [editingName, setEditingName] = useState<string>('');
-  const [newName, setNewName] = useState<string>('');
 
   const handleAddStock = () => {
     if (!selectedMaterial || addQuantity <= 0) {
@@ -36,68 +30,6 @@ export const InventoryPage = () => {
     setSelectedMaterial('');
   };
 
-  const handleMaterialSelection = (value: string) => {
-    if (value === 'add_new') {
-      setShowAddMaterial(true);
-      setSelectedMaterial('');
-    } else {
-      setSelectedMaterial(value);
-      setShowAddMaterial(false);
-    }
-  };
-
-  const handleAddNewMaterial = (materialData: {
-    name: string;
-    unit: string;
-    costPerUnit: number;
-    minStockLevel: number;
-    currentStock: number;
-  }) => {
-    const success = addNewMaterial(materialData);
-    if (success) {
-      setShowAddMaterial(false);
-    }
-    return success;
-  };
-
-  const handleUpdateCost = (materialId: string) => {
-    if (newCost <= 0) {
-      toast({
-        title: "Invalid Input",
-        description: "Cost must be greater than 0",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    updateMaterialCost(materialId, newCost);
-    setEditingCost('');
-    setNewCost(0);
-  };
-
-  const handleRenameMaterial = (materialId: string) => {
-    if (!newName.trim()) {
-      toast({
-        title: "Invalid Input",
-        description: "Name cannot be empty",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const success = renameMaterial(materialId, newName.trim());
-    if (success) {
-      setEditingName('');
-      setNewName('');
-    }
-  };
-
-  const handleDeleteMaterial = (materialId: string) => {
-    if (window.confirm('Are you sure you want to delete this material? This action cannot be undone.')) {
-      deleteMaterial(materialId);
-    }
-  };
-
   const materialTransactions = transactions.filter(t => t.materialId).slice(0, 20);
 
   return (
@@ -110,21 +42,21 @@ export const InventoryPage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Add Material Form */}
+        {/* Add Stock Form */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
               <Plus className="mr-2 h-5 w-5" />
-              Add Material
+              Add Stock
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Add Material</label>
+              <label className="block text-sm font-medium mb-2">Select Material</label>
               <select 
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={selectedMaterial}
-                onChange={(e) => handleMaterialSelection(e.target.value)}
+                onChange={(e) => setSelectedMaterial(e.target.value)}
               >
                 <option value="">Choose material...</option>
                 {rawMaterials.map(material => (
@@ -132,73 +64,59 @@ export const InventoryPage = () => {
                     {material.name} (Current: {material.currentStock.toLocaleString()}{material.unit})
                   </option>
                 ))}
-                <option value="add_new" className="font-medium text-blue-600">
-                  + Add New Material
-                </option>
               </select>
             </div>
 
-            {showAddMaterial && (
-              <AddMaterialForm
-                onAddMaterial={handleAddNewMaterial}
-                onCancel={() => setShowAddMaterial(false)}
+            <div>
+              <label className="block text-sm font-medium mb-2">Quantity to Add</label>
+              <Input 
+                type="number"
+                step="0.01"
+                min="0"
+                value={addQuantity || ''}
+                onChange={(e) => setAddQuantity(parseFloat(e.target.value) || 0)}
+                placeholder="Enter quantity"
               />
+              {selectedMaterial && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Unit: {rawMaterials.find(m => m.id === selectedMaterial)?.unit}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Notes (Optional)</label>
+              <Input 
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Purchase notes, supplier, etc."
+              />
+            </div>
+
+            {selectedMaterial && addQuantity > 0 && (
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-sm font-medium">Stock Update Preview:</p>
+                <p className="text-sm text-gray-600">
+                  {rawMaterials.find(m => m.id === selectedMaterial)?.name}
+                </p>
+                <p className="text-sm">
+                  {rawMaterials.find(m => m.id === selectedMaterial)?.currentStock.toLocaleString()} 
+                  → {((rawMaterials.find(m => m.id === selectedMaterial)?.currentStock || 0) + addQuantity).toLocaleString()}
+                  {rawMaterials.find(m => m.id === selectedMaterial)?.unit}
+                </p>
+                <p className="text-sm text-green-600 font-medium">
+                  Cost: ₹{((rawMaterials.find(m => m.id === selectedMaterial)?.costPerUnit || 0) * addQuantity).toFixed(2)}
+                </p>
+              </div>
             )}
 
-            {!showAddMaterial && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Quantity to Add</label>
-                  <Input 
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={addQuantity || ''}
-                    onChange={(e) => setAddQuantity(parseFloat(e.target.value) || 0)}
-                    placeholder="Enter quantity"
-                  />
-                  {selectedMaterial && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      Unit: {rawMaterials.find(m => m.id === selectedMaterial)?.unit}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Notes (Optional)</label>
-                  <Input 
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Purchase notes, supplier, etc."
-                  />
-                </div>
-
-                {selectedMaterial && addQuantity > 0 && (
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <p className="text-sm font-medium">Stock Update Preview:</p>
-                    <p className="text-sm text-gray-600">
-                      {rawMaterials.find(m => m.id === selectedMaterial)?.name}
-                    </p>
-                    <p className="text-sm">
-                      {rawMaterials.find(m => m.id === selectedMaterial)?.currentStock.toLocaleString()} 
-                      → {((rawMaterials.find(m => m.id === selectedMaterial)?.currentStock || 0) + addQuantity).toLocaleString()}
-                      {rawMaterials.find(m => m.id === selectedMaterial)?.unit}
-                    </p>
-                    <p className="text-sm text-green-600 font-medium">
-                      Cost: ₹{((rawMaterials.find(m => m.id === selectedMaterial)?.costPerUnit || 0) * addQuantity).toFixed(2)}
-                    </p>
-                  </div>
-                )}
-
-                <Button 
-                  onClick={handleAddStock}
-                  disabled={!selectedMaterial || addQuantity <= 0}
-                  className="w-full"
-                >
-                  Add to Inventory
-                </Button>
-              </>
-            )}
+            <Button 
+              onClick={handleAddStock}
+              disabled={!selectedMaterial || addQuantity <= 0}
+              className="w-full"
+            >
+              Add to Inventory
+            </Button>
           </CardContent>
         </Card>
 
@@ -219,59 +137,7 @@ export const InventoryPage = () => {
                 return (
                   <div key={material.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {editingName === material.id ? (
-                          <div className="flex gap-1">
-                            <Input 
-                              value={newName}
-                              onChange={(e) => setNewName(e.target.value)}
-                              className="h-8 text-lg font-semibold"
-                              placeholder="Enter new name"
-                            />
-                            <Button 
-                              size="sm" 
-                              onClick={() => handleRenameMaterial(material.id)}
-                              className="h-8 px-2 text-xs"
-                            >
-                              Save
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => {
-                                setEditingName('');
-                                setNewName('');
-                              }}
-                              className="h-8 px-2 text-xs"
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        ) : (
-                          <>
-                            <h3 className="font-semibold text-lg">{material.name}</h3>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => {
-                                setEditingName(material.id);
-                                setNewName(material.name);
-                              }}
-                              className="h-6 w-6 p-0"
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleDeleteMaterial(material.id)}
-                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
+                      <h3 className="font-semibold text-lg">{material.name}</h3>
                       <Badge variant={status === 'critical' ? 'destructive' : status === 'warning' ? 'secondary' : 'default'}>
                         {status}
                       </Badge>
@@ -292,48 +158,13 @@ export const InventoryPage = () => {
                       </div>
                       <div>
                         <p className="text-gray-600">Cost/Unit</p>
-                        <div className="flex items-center gap-2">
-                          {editingCost === material.id ? (
-                            <div className="flex gap-1">
-                              <Input 
-                                type="number"
-                                step="0.01"
-                                value={newCost || ''}
-                                onChange={(e) => setNewCost(parseFloat(e.target.value) || 0)}
-                                className="w-20 h-6 text-xs"
-                              />
-                              <Button 
-                                size="sm" 
-                                onClick={() => handleUpdateCost(material.id)}
-                                className="h-6 px-2 text-xs"
-                              >
-                                Save
-                              </Button>
-                            </div>
-                          ) : (
-                            <>
-                              <p className="font-medium">₹{material.costPerUnit.toFixed(2)}</p>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => {
-                                  setEditingCost(material.id);
-                                  setNewCost(material.costPerUnit);
-                                }}
-                                className="h-6 w-6 p-0"
-                              >
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                        <p className="font-medium">₹{material.costPerUnit.toFixed(2)}</p>
                       </div>
                       <div>
                         <p className="text-gray-600">Total Value</p>
                         <p className="font-bold text-green-600">₹{stockValue.toFixed(2)}</p>
                       </div>
                     </div>
-                    
                     
                     <div className="mt-3">
                       <div className="flex justify-between text-xs text-gray-600 mb-1">
