@@ -6,7 +6,10 @@ import {
   Factory, 
   BarChart3, 
   Settings,
-  Store 
+  Store,
+  Candy,
+  Coffee,
+  Cake
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -18,7 +21,16 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'inventory', label: 'Inventory', icon: Package },
-    { id: 'production', label: 'Production', icon: Factory },
+    { 
+      id: 'production', 
+      label: 'Production', 
+      icon: Factory,
+      submenu: [
+        { id: 'production-sweets', label: 'Sweets', icon: Candy },
+        { id: 'production-savouries', label: 'Savouries', icon: Coffee },
+        { id: 'production-bakery', label: 'Bakery', icon: Cake },
+      ]
+    },
     { id: 'reports', label: 'Reports', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -36,12 +48,15 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
         <ul className="space-y-2 px-4">
           {menuItems.map((item) => {
             const Icon = item.icon;
+            const hasSubmenu = item.submenu && item.submenu.length > 0;
+            const isProductionActive = activeTab.startsWith('production');
+            
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => !hasSubmenu && setActiveTab(item.id)}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
-                    activeTab === item.id
+                    (activeTab === item.id || (item.id === 'production' && isProductionActive))
                       ? 'bg-blue-100 text-blue-700 border-r-4 border-blue-700'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
@@ -49,6 +64,29 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
                   <Icon className="h-5 w-5" />
                   <span className="font-medium">{item.label}</span>
                 </button>
+                
+                {hasSubmenu && (item.id === 'production' && isProductionActive) && (
+                  <ul className="ml-8 mt-2 space-y-1">
+                    {item.submenu.map((subItem) => {
+                      const SubIcon = subItem.icon;
+                      return (
+                        <li key={subItem.id}>
+                          <button
+                            onClick={() => setActiveTab(subItem.id)}
+                            className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-left transition-colors duration-200 ${
+                              activeTab === subItem.id
+                                ? 'bg-blue-50 text-blue-600'
+                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                            }`}
+                          >
+                            <SubIcon className="h-4 w-4" />
+                            <span className="text-sm">{subItem.label}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </li>
             );
           })}

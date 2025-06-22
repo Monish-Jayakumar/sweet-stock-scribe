@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useInventory } from '@/hooks/useInventory';
-import { Plus, Package, Edit, Trash2, Lock } from 'lucide-react';
+import { Plus, Package, Edit, Trash2, Lock, Candy, Coffee, Cake } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { AddMaterialForm } from './AddMaterialForm';
 import { AddProductForm } from './AddProductForm';
@@ -15,7 +14,9 @@ export const SettingsPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [password, setPassword] = useState<string>('');
   const [showAddMaterial, setShowAddMaterial] = useState<boolean>(false);
-  const [showAddProduct, setShowAddProduct] = useState<boolean>(false);
+  const [showAddSweet, setShowAddSweet] = useState<boolean>(false);
+  const [showAddSavoury, setShowAddSavoury] = useState<boolean>(false);
+  const [showAddBakery, setShowAddBakery] = useState<boolean>(false);
   const [editingCost, setEditingCost] = useState<string>('');
   const [newCost, setNewCost] = useState<number>(0);
   const [editingMaterialName, setEditingMaterialName] = useState<string>('');
@@ -56,10 +57,12 @@ export const SettingsPage = () => {
   const handleAddNewProduct = (productData: {
     name: string;
     recipe: { materialId: string; quantity: number }[];
-  }) => {
-    const success = addNewProduct(productData);
+  }, category: 'sweets' | 'savouries' | 'bakery') => {
+    const success = addNewProduct({ ...productData, category });
     if (success) {
-      setShowAddProduct(false);
+      setShowAddSweet(false);
+      setShowAddSavoury(false);
+      setShowAddBakery(false);
     }
     return success;
   };
@@ -124,6 +127,113 @@ export const SettingsPage = () => {
       deleteProduct(productId);
     }
   };
+
+  // Filter products by category
+  const sweetProducts = products.filter(p => p.category === 'sweets');
+  const savouryProducts = products.filter(p => p.category === 'savouries');
+  const bakeryProducts = products.filter(p => p.category === 'bakery');
+
+  const renderProductSection = (
+    productList: any[],
+    title: string,
+    icon: React.ElementType,
+    showAdd: boolean,
+    setShowAdd: (show: boolean) => void,
+    category: 'sweets' | 'savouries' | 'bakery'
+  ) => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          {React.createElement(icon, { className: "mr-2 h-5 w-5" })}
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Button onClick={() => setShowAdd(true)} className="mb-4">
+          <Plus className="mr-2 h-4 w-4" />
+          Add New {title.slice(0, -1)}
+        </Button>
+
+        {showAdd && (
+          <div className="border p-4 rounded-lg">
+            <AddProductForm
+              rawMaterials={rawMaterials}
+              onAddProduct={(data) => handleAddNewProduct(data, category)}
+              onCancel={() => setShowAdd(false)}
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {productList.map(product => (
+            <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-3">
+                {editingProductName === product.id ? (
+                  <div className="flex gap-1 flex-1">
+                    <Input 
+                      value={newProductName}
+                      onChange={(e) => setNewProductName(e.target.value)}
+                      className="h-8 font-semibold"
+                      placeholder="Enter new name"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleRenameProduct(product.id)}
+                      className="h-8 px-2 text-xs"
+                    >
+                      Save
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => {
+                        setEditingProductName('');
+                        setNewProductName('');
+                      }}
+                      className="h-8 px-2 text-xs"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <h3 className="font-semibold text-lg">{product.name}</h3>
+                    <div className="flex gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setEditingProductName(product.id);
+                          setNewProductName(product.name);
+                        }}
+                        className="h-6 w-6 p-0"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleDeleteProduct(product.id)}
+                        className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Production Cost:</span>
+                  <span className="font-medium">₹{product.productionCost.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   if (!isAuthenticated) {
     return (
@@ -321,99 +431,10 @@ export const SettingsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Products Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Products Management</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Button 
-            onClick={() => setShowAddProduct(true)}
-            className="mb-4"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Product
-          </Button>
-
-          {showAddProduct && (
-            <div className="border p-4 rounded-lg">
-              <AddProductForm
-                rawMaterials={rawMaterials}
-                onAddProduct={handleAddNewProduct}
-                onCancel={() => setShowAddProduct(false)}
-              />
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {products.map(product => (
-              <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-3">
-                  {editingProductName === product.id ? (
-                    <div className="flex gap-1 flex-1">
-                      <Input 
-                        value={newProductName}
-                        onChange={(e) => setNewProductName(e.target.value)}
-                        className="h-8 font-semibold"
-                        placeholder="Enter new name"
-                      />
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleRenameProduct(product.id)}
-                        className="h-8 px-2 text-xs"
-                      >
-                        Save
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => {
-                          setEditingProductName('');
-                          setNewProductName('');
-                        }}
-                        className="h-8 px-2 text-xs"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <h3 className="font-semibold text-lg">{product.name}</h3>
-                      <div className="flex gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => {
-                            setEditingProductName(product.id);
-                            setNewProductName(product.name);
-                          }}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDeleteProduct(product.id)}
-                          className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Production Cost:</span>
-                    <span className="font-medium">₹{product.productionCost.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Product Sections */}
+      {renderProductSection(sweetProducts, 'Sweets', Candy, showAddSweet, setShowAddSweet, 'sweets')}
+      {renderProductSection(savouryProducts, 'Savouries', Coffee, showAddSavoury, setShowAddSavoury, 'savouries')}
+      {renderProductSection(bakeryProducts, 'Bakery', Cake, showAddBakery, setShowAddBakery, 'bakery')}
     </div>
   );
 };

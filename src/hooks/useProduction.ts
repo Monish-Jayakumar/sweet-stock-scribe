@@ -80,6 +80,7 @@ export const useProduction = (
   const addNewProduct = (productData: {
     name: string;
     recipe: { materialId: string; quantity: number }[];
+    category: 'sweets' | 'savouries' | 'bakery';
   }): boolean => {
     const existingProduct = products.find(p => 
       p.name.toLowerCase() === productData.name.toLowerCase()
@@ -99,14 +100,14 @@ export const useProduction = (
       name: productData.name,
       recipe: productData.recipe,
       productionCost: 0,
-      sellingPrice: 0
+      category: productData.category
     };
 
     setProducts(prev => [...prev, newProduct]);
 
     toast({
       title: "Product Added",
-      description: `${productData.name} has been added to products`,
+      description: `${productData.name} has been added to ${productData.category}`,
     });
 
     return true;
