@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ export const SettingsPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [password, setPassword] = useState<string>('');
   const [activeSection, setActiveSection] = useState<'materials' | 'production'>('materials');
+  const [activeProductionSection, setActiveProductionSection] = useState<'sweets' | 'savouries' | 'bakery'>('sweets');
   const [showAddMaterial, setShowAddMaterial] = useState<boolean>(false);
   const [showAddSweet, setShowAddSweet] = useState<boolean>(false);
   const [showAddSavoury, setShowAddSavoury] = useState<boolean>(false);
@@ -134,105 +136,71 @@ export const SettingsPage = () => {
   const savouryProducts = products.filter(p => p.category === 'savouries');
   const bakeryProducts = products.filter(p => p.category === 'bakery');
 
-  const renderProductSection = (
-    productList: any[],
-    title: string,
-    icon: React.ElementType,
-    showAdd: boolean,
-    setShowAdd: (show: boolean) => void,
-    category: 'sweets' | 'savouries' | 'bakery'
-  ) => (
-    <div className="border border-gray-200 rounded-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold flex items-center">
-          {React.createElement(icon, { className: "mr-2 h-5 w-5" })}
-          {title}
-        </h3>
-        <Button onClick={() => setShowAdd(true)} size="sm">
-          <Plus className="mr-2 h-4 w-4" />
-          Add {title.slice(0, -1)}
-        </Button>
-      </div>
+  const getCurrentProducts = () => {
+    switch (activeProductionSection) {
+      case 'sweets':
+        return sweetProducts;
+      case 'savouries':
+        return savouryProducts;
+      case 'bakery':
+        return bakeryProducts;
+      default:
+        return sweetProducts;
+    }
+  };
 
-      {showAdd && (
-        <div className="border p-4 rounded-lg mb-4">
-          <AddProductForm
-            rawMaterials={rawMaterials}
-            onAddProduct={(data) => handleAddNewProduct(data, category)}
-            onCancel={() => setShowAdd(false)}
-          />
-        </div>
-      )}
+  const getProductionTitle = () => {
+    switch (activeProductionSection) {
+      case 'sweets':
+        return 'Sweets';
+      case 'savouries':
+        return 'Savouries';
+      case 'bakery':
+        return 'Bakery';
+      default:
+        return 'Sweets';
+    }
+  };
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {productList.map(product => (
-          <div key={product.id} className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              {editingProductName === product.id ? (
-                <div className="flex gap-1 flex-1">
-                  <Input 
-                    value={newProductName}
-                    onChange={(e) => setNewProductName(e.target.value)}
-                    className="h-8 font-semibold"
-                    placeholder="Enter new name"
-                  />
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleRenameProduct(product.id)}
-                    className="h-8 px-2 text-xs"
-                  >
-                    Save
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => {
-                      setEditingProductName('');
-                      setNewProductName('');
-                    }}
-                    className="h-8 px-2 text-xs"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <h4 className="font-semibold">{product.name}</h4>
-                  <div className="flex gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => {
-                        setEditingProductName(product.id);
-                        setNewProductName(product.name);
-                      }}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleDeleteProduct(product.id)}
-                      className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="space-y-1 text-sm">
-              <div>
-                <span className="text-gray-600">Recipe: </span>
-                <span className="text-xs">{product.recipe.length} ingredients</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  const getProductionIcon = () => {
+    switch (activeProductionSection) {
+      case 'sweets':
+        return Candy;
+      case 'savouries':
+        return Coffee;
+      case 'bakery':
+        return Cake;
+      default:
+        return Candy;
+    }
+  };
+
+  const getShowAddState = () => {
+    switch (activeProductionSection) {
+      case 'sweets':
+        return showAddSweet;
+      case 'savouries':
+        return showAddSavoury;
+      case 'bakery':
+        return showAddBakery;
+      default:
+        return showAddSweet;
+    }
+  };
+
+  const setShowAddState = (show: boolean) => {
+    switch (activeProductionSection) {
+      case 'sweets':
+        setShowAddSweet(show);
+        break;
+      case 'savouries':
+        setShowAddSavoury(show);
+        break;
+      case 'bakery':
+        setShowAddBakery(show);
+        break;
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -462,9 +430,132 @@ export const SettingsPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {renderProductSection(sweetProducts, 'Sweets', Candy, showAddSweet, setShowAddSweet, 'sweets')}
-            {renderProductSection(savouryProducts, 'Savouries', Coffee, showAddSavoury, setShowAddSavoury, 'savouries')}
-            {renderProductSection(bakeryProducts, 'Bakery', Cake, showAddBakery, setShowAddBakery, 'bakery')}
+            {/* Production Section Navigation */}
+            <div className="flex gap-4 mb-6">
+              <Button
+                variant={activeProductionSection === 'sweets' ? 'default' : 'outline'}
+                onClick={() => setActiveProductionSection('sweets')}
+                className="flex items-center"
+              >
+                <Candy className="mr-2 h-4 w-4" />
+                Sweets
+              </Button>
+              <Button
+                variant={activeProductionSection === 'savouries' ? 'default' : 'outline'}
+                onClick={() => setActiveProductionSection('savouries')}
+                className="flex items-center"
+              >
+                <Coffee className="mr-2 h-4 w-4" />
+                Savouries
+              </Button>
+              <Button
+                variant={activeProductionSection === 'bakery' ? 'default' : 'outline'}
+                onClick={() => setActiveProductionSection('bakery')}
+                className="flex items-center"
+              >
+                <Cake className="mr-2 h-4 w-4" />
+                Bakery
+              </Button>
+            </div>
+
+            {/* Current Production Section */}
+            <div className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold flex items-center">
+                  {React.createElement(getProductionIcon(), { className: "mr-2 h-5 w-5" })}
+                  {getProductionTitle()}
+                </h3>
+                <Button onClick={() => setShowAddState(true)} size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add {getProductionTitle().slice(0, -1)}
+                </Button>
+              </div>
+
+              {getShowAddState() && (
+                <div className="border p-4 rounded-lg mb-4">
+                  <AddProductForm
+                    rawMaterials={rawMaterials}
+                    onAddProduct={(data) => handleAddNewProduct(data, activeProductionSection)}
+                    onCancel={() => setShowAddState(false)}
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {getCurrentProducts().map(product => (
+                  <div key={product.id} className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between mb-2">
+                      {editingProductName === product.id ? (
+                        <div className="flex gap-1 flex-1">
+                          <Input 
+                            value={newProductName}
+                            onChange={(e) => setNewProductName(e.target.value)}
+                            className="h-8 font-semibold"
+                            placeholder="Enter new name"
+                          />
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleRenameProduct(product.id)}
+                            className="h-8 px-2 text-xs"
+                          >
+                            Save
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              setEditingProductName('');
+                              setNewProductName('');
+                            }}
+                            className="h-8 px-2 text-xs"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <h4 className="font-semibold">{product.name}</h4>
+                          <div className="flex gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                setEditingProductName(product.id);
+                                setNewProductName(product.name);
+                              }}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteProduct(product.id)}
+                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div>
+                        <span className="text-gray-600">Recipe: </span>
+                        <span className="text-xs">{product.recipe.length} ingredients</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {getCurrentProducts().length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No products available in {getProductionTitle().toLowerCase()} category</p>
+                  <p className="text-sm text-gray-400 mt-2">Add products to get started</p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
