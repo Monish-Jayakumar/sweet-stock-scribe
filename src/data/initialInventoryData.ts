@@ -106,6 +106,6 @@ export const initialProducts: Product[] = [
       { materialId: '5', quantity: 0.02 }
     ],
     productionCost: 0,
-    sellingPrice: 350
+    category: 'sweets'
   }
 ];

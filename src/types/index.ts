@@ -19,7 +19,7 @@ export interface Product {
   name: string;
   recipe: RecipeIngredient[];
   productionCost: number;
-  sellingPrice: number;
+  category: 'sweets' | 'savouries' | 'bakery';
 }
 
 export interface StockTransaction {
