@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useInventory } from '@/hooks/useInventory';
-import { Plus, Package, Edit, Trash2, Lock, Candy, Coffee, Cake } from 'lucide-react';
+import { Plus, Package, Edit, Trash2, Lock, Candy, Coffee, Cake, ChefHat } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { AddMaterialForm } from './AddMaterialForm';
 import { AddProductForm } from './AddProductForm';
@@ -141,98 +142,100 @@ export const SettingsPage = () => {
     setShowAdd: (show: boolean) => void,
     category: 'sweets' | 'savouries' | 'bakery'
   ) => (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center">
+    <div className="border border-gray-200 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold flex items-center">
           {React.createElement(icon, { className: "mr-2 h-5 w-5" })}
           {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Button onClick={() => setShowAdd(true)} className="mb-4">
+        </h3>
+        <Button onClick={() => setShowAdd(true)} size="sm">
           <Plus className="mr-2 h-4 w-4" />
-          Add New {title.slice(0, -1)}
+          Add {title.slice(0, -1)}
         </Button>
+      </div>
 
-        {showAdd && (
-          <div className="border p-4 rounded-lg">
-            <AddProductForm
-              rawMaterials={rawMaterials}
-              onAddProduct={(data) => handleAddNewProduct(data, category)}
-              onCancel={() => setShowAdd(false)}
-            />
-          </div>
-        )}
+      {showAdd && (
+        <div className="border p-4 rounded-lg mb-4">
+          <AddProductForm
+            rawMaterials={rawMaterials}
+            onAddProduct={(data) => handleAddNewProduct(data, category)}
+            onCancel={() => setShowAdd(false)}
+          />
+        </div>
+      )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {productList.map(product => (
-            <div key={product.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
-                {editingProductName === product.id ? (
-                  <div className="flex gap-1 flex-1">
-                    <Input 
-                      value={newProductName}
-                      onChange={(e) => setNewProductName(e.target.value)}
-                      className="h-8 font-semibold"
-                      placeholder="Enter new name"
-                    />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {productList.map(product => (
+          <div key={product.id} className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              {editingProductName === product.id ? (
+                <div className="flex gap-1 flex-1">
+                  <Input 
+                    value={newProductName}
+                    onChange={(e) => setNewProductName(e.target.value)}
+                    className="h-8 font-semibold"
+                    placeholder="Enter new name"
+                  />
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleRenameProduct(product.id)}
+                    className="h-8 px-2 text-xs"
+                  >
+                    Save
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      setEditingProductName('');
+                      setNewProductName('');
+                    }}
+                    className="h-8 px-2 text-xs"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <h4 className="font-semibold">{product.name}</h4>
+                  <div className="flex gap-1">
                     <Button 
-                      size="sm" 
-                      onClick={() => handleRenameProduct(product.id)}
-                      className="h-8 px-2 text-xs"
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        setEditingProductName(product.id);
+                        setNewProductName(product.name);
+                      }}
+                      className="h-6 w-6 p-0"
                     >
-                      Save
+                      <Edit className="h-3 w-3" />
                     </Button>
                     <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => {
-                        setEditingProductName('');
-                        setNewProductName('');
-                      }}
-                      className="h-8 px-2 text-xs"
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDeleteProduct(product.id)}
+                      className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
                     >
-                      Cancel
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
-                ) : (
-                  <>
-                    <h3 className="font-semibold text-lg">{product.name}</h3>
-                    <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => {
-                          setEditingProductName(product.id);
-                          setNewProductName(product.name);
-                        }}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleDeleteProduct(product.id)}
-                        className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </>
-                )}
+                </>
+              )}
+            </div>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span>Production Cost:</span>
+                <span className="font-medium">₹{product.productionCost.toFixed(2)}</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Production Cost:</span>
-                  <span className="font-medium">₹{product.productionCost.toFixed(2)}</span>
-                </div>
+              <div>
+                <span className="text-gray-600">Recipe: </span>
+                <span className="text-xs">{product.recipe.length} ingredients</span>
               </div>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 
   if (!isAuthenticated) {
@@ -431,10 +434,20 @@ export const SettingsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Product Sections */}
-      {renderProductSection(sweetProducts, 'Sweets', Candy, showAddSweet, setShowAddSweet, 'sweets')}
-      {renderProductSection(savouryProducts, 'Savouries', Coffee, showAddSavoury, setShowAddSavoury, 'savouries')}
-      {renderProductSection(bakeryProducts, 'Bakery', Cake, showAddBakery, setShowAddBakery, 'bakery')}
+      {/* Production and Recipe Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <ChefHat className="mr-2 h-5 w-5" />
+            Production and Recipe Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {renderProductSection(sweetProducts, 'Sweets', Candy, showAddSweet, setShowAddSweet, 'sweets')}
+          {renderProductSection(savouryProducts, 'Savouries', Coffee, showAddSavoury, setShowAddSavoury, 'savouries')}
+          {renderProductSection(bakeryProducts, 'Bakery', Cake, showAddBakery, setShowAddBakery, 'bakery')}
+        </CardContent>
+      </Card>
     </div>
   );
 };
