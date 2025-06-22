@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useInventory } from '@/hooks/useInventory';
-import { Plus, Package, Edit, Trash2, Lock, Candy, Coffee, Cake, ChefHat } from 'lucide-react';
+import { Plus, Package, Edit, Trash2, Lock, Candy, Coffee, Cake, ChefHat, ArrowRight } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { AddMaterialForm } from './AddMaterialForm';
 import { AddProductForm } from './AddProductForm';
@@ -41,6 +40,12 @@ export const SettingsPage = () => {
         variant: "destructive"
       });
     }
+  };
+
+  // Navigate to production pages
+  const navigateToProduction = (section: 'sweets' | 'savouries' | 'bakery') => {
+    const event = new CustomEvent('navigate', { detail: `production-${section}` });
+    window.dispatchEvent(event);
   };
 
   const handleAddNewMaterial = (materialData: {
@@ -422,142 +427,192 @@ export const SettingsPage = () => {
 
       {/* Production and Recipe Management Section */}
       {activeSection === 'production' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <ChefHat className="mr-2 h-5 w-5" />
-              Production and Recipe Management
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Production Section Navigation */}
-            <div className="flex gap-4 mb-6">
-              <Button
-                variant={activeProductionSection === 'sweets' ? 'default' : 'outline'}
-                onClick={() => setActiveProductionSection('sweets')}
-                className="flex items-center"
-              >
-                <Candy className="mr-2 h-4 w-4" />
-                Sweets
-              </Button>
-              <Button
-                variant={activeProductionSection === 'savouries' ? 'default' : 'outline'}
-                onClick={() => setActiveProductionSection('savouries')}
-                className="flex items-center"
-              >
-                <Coffee className="mr-2 h-4 w-4" />
-                Savouries
-              </Button>
-              <Button
-                variant={activeProductionSection === 'bakery' ? 'default' : 'outline'}
-                onClick={() => setActiveProductionSection('bakery')}
-                className="flex items-center"
-              >
-                <Cake className="mr-2 h-4 w-4" />
-                Bakery
-              </Button>
-            </div>
+        <div className="space-y-6">
+          {/* Quick Navigation to Production Pages */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <ArrowRight className="mr-2 h-5 w-5" />
+                Go to Production
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button
+                  onClick={() => navigateToProduction('sweets')}
+                  className="flex items-center justify-center p-6 h-auto"
+                  variant="outline"
+                >
+                  <div className="text-center">
+                    <Candy className="mx-auto mb-2 h-8 w-8" />
+                    <div className="font-semibold">Sweets Production</div>
+                    <div className="text-sm text-gray-500">Manage sweets production</div>
+                  </div>
+                </Button>
+                <Button
+                  onClick={() => navigateToProduction('savouries')}
+                  className="flex items-center justify-center p-6 h-auto"
+                  variant="outline"
+                >
+                  <div className="text-center">
+                    <Coffee className="mx-auto mb-2 h-8 w-8" />
+                    <div className="font-semibold">Savouries Production</div>
+                    <div className="text-sm text-gray-500">Manage savouries production</div>
+                  </div>
+                </Button>
+                <Button
+                  onClick={() => navigateToProduction('bakery')}
+                  className="flex items-center justify-center p-6 h-auto"
+                  variant="outline"
+                >
+                  <div className="text-center">
+                    <Cake className="mx-auto mb-2 h-8 w-8" />
+                    <div className="font-semibold">Bakery Production</div>
+                    <div className="text-sm text-gray-500">Manage bakery production</div>
+                  </div>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Current Production Section */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold flex items-center">
-                  {React.createElement(getProductionIcon(), { className: "mr-2 h-5 w-5" })}
-                  {getProductionTitle()}
-                </h3>
-                <Button onClick={() => setShowAddState(true)} size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add {getProductionTitle().slice(0, -1)}
+          {/* Recipe Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <ChefHat className="mr-2 h-5 w-5" />
+                Recipe Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Production Section Navigation */}
+              <div className="flex gap-4 mb-6">
+                <Button
+                  variant={activeProductionSection === 'sweets' ? 'default' : 'outline'}
+                  onClick={() => setActiveProductionSection('sweets')}
+                  className="flex items-center"
+                >
+                  <Candy className="mr-2 h-4 w-4" />
+                  Sweets
+                </Button>
+                <Button
+                  variant={activeProductionSection === 'savouries' ? 'default' : 'outline'}
+                  onClick={() => setActiveProductionSection('savouries')}
+                  className="flex items-center"
+                >
+                  <Coffee className="mr-2 h-4 w-4" />
+                  Savouries
+                </Button>
+                <Button
+                  variant={activeProductionSection === 'bakery' ? 'default' : 'outline'}
+                  onClick={() => setActiveProductionSection('bakery')}
+                  className="flex items-center"
+                >
+                  <Cake className="mr-2 h-4 w-4" />
+                  Bakery
                 </Button>
               </div>
 
-              {getShowAddState() && (
-                <div className="border p-4 rounded-lg mb-4">
-                  <AddProductForm
-                    rawMaterials={rawMaterials}
-                    onAddProduct={(data) => handleAddNewProduct(data, activeProductionSection)}
-                    onCancel={() => setShowAddState(false)}
-                  />
+              {/* Current Production Section */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold flex items-center">
+                    {React.createElement(getProductionIcon(), { className: "mr-2 h-5 w-5" })}
+                    {getProductionTitle()}
+                  </h3>
+                  <Button onClick={() => setShowAddState(true)} size="sm">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add {getProductionTitle().slice(0, -1)}
+                  </Button>
                 </div>
-              )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {getCurrentProducts().map(product => (
-                  <div key={product.id} className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between mb-2">
-                      {editingProductName === product.id ? (
-                        <div className="flex gap-1 flex-1">
-                          <Input 
-                            value={newProductName}
-                            onChange={(e) => setNewProductName(e.target.value)}
-                            className="h-8 font-semibold"
-                            placeholder="Enter new name"
-                          />
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleRenameProduct(product.id)}
-                            className="h-8 px-2 text-xs"
-                          >
-                            Save
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => {
-                              setEditingProductName('');
-                              setNewProductName('');
-                            }}
-                            className="h-8 px-2 text-xs"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <h4 className="font-semibold">{product.name}</h4>
-                          <div className="flex gap-1">
+                {getShowAddState() && (
+                  <div className="border p-4 rounded-lg mb-4">
+                    <AddProductForm
+                      rawMaterials={rawMaterials}
+                      onAddProduct={(data) => handleAddNewProduct(data, activeProductionSection)}
+                      onCancel={() => setShowAddState(false)}
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {getCurrentProducts().map(product => (
+                    <div key={product.id} className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-2">
+                        {editingProductName === product.id ? (
+                          <div className="flex gap-1 flex-1">
+                            <Input 
+                              value={newProductName}
+                              onChange={(e) => setNewProductName(e.target.value)}
+                              className="h-8 font-semibold"
+                              placeholder="Enter new name"
+                            />
                             <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => {
-                                setEditingProductName(product.id);
-                                setNewProductName(product.name);
-                              }}
-                              className="h-6 w-6 p-0"
+                              size="sm" 
+                              onClick={() => handleRenameProduct(product.id)}
+                              className="h-8 px-2 text-xs"
                             >
-                              <Edit className="h-3 w-3" />
+                              Save
                             </Button>
                             <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleDeleteProduct(product.id)}
-                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setEditingProductName('');
+                                setNewProductName('');
+                              }}
+                              className="h-8 px-2 text-xs"
                             >
-                              <Trash2 className="h-3 w-3" />
+                              Cancel
                             </Button>
                           </div>
-                        </>
-                      )}
-                    </div>
-                    <div className="space-y-1 text-sm">
-                      <div>
-                        <span className="text-gray-600">Recipe: </span>
-                        <span className="text-xs">{product.recipe.length} ingredients</span>
+                        ) : (
+                          <>
+                            <h4 className="font-semibold">{product.name}</h4>
+                            <div className="flex gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => {
+                                  setEditingProductName(product.id);
+                                  setNewProductName(product.name);
+                                }}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDeleteProduct(product.id)}
+                                className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <div>
+                          <span className="text-gray-600">Recipe: </span>
+                          <span className="text-xs">{product.recipe.length} ingredients</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-
-              {getCurrentProducts().length === 0 && (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No products available in {getProductionTitle().toLowerCase()} category</p>
-                  <p className="text-sm text-gray-400 mt-2">Add products to get started</p>
+                  ))}
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+
+                {getCurrentProducts().length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No products available in {getProductionTitle().toLowerCase()} category</p>
+                    <p className="text-sm text-gray-400 mt-2">Add products to get started</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

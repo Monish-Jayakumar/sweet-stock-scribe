@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { InventoryPage } from '@/components/InventoryPage';
@@ -10,6 +10,18 @@ import { InventoryProvider } from '@/contexts/InventoryContext';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  useEffect(() => {
+    const handleNavigate = (event: CustomEvent) => {
+      setActiveTab(event.detail);
+    };
+
+    window.addEventListener('navigate', handleNavigate as EventListener);
+    
+    return () => {
+      window.removeEventListener('navigate', handleNavigate as EventListener);
+    };
+  }, []);
 
   const renderContent = () => {
     switch (activeTab) {
