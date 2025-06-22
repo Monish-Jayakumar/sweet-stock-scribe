@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,7 @@ export const SettingsPage = () => {
   const { rawMaterials, products, getStockStatus, addNewMaterial, updateMaterialCost, renameMaterial, deleteMaterial, addNewProduct, renameProduct, deleteProduct } = useInventory();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [password, setPassword] = useState<string>('');
+  const [activeSection, setActiveSection] = useState<'materials' | 'production'>('materials');
   const [showAddMaterial, setShowAddMaterial] = useState<boolean>(false);
   const [showAddSweet, setShowAddSweet] = useState<boolean>(false);
   const [showAddSavoury, setShowAddSavoury] = useState<boolean>(false);
@@ -223,10 +223,6 @@ export const SettingsPage = () => {
               )}
             </div>
             <div className="space-y-1 text-sm">
-              <div className="flex justify-between">
-                <span>Production Cost:</span>
-                <span className="font-medium">₹{product.productionCost.toFixed(2)}</span>
-              </div>
               <div>
                 <span className="text-gray-600">Recipe: </span>
                 <span className="text-xs">{product.recipe.length} ingredients</span>
@@ -280,174 +276,198 @@ export const SettingsPage = () => {
         </Button>
       </div>
 
-      {/* Materials Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Package className="mr-2 h-5 w-5" />
-            Materials Management
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Button 
-            onClick={() => setShowAddMaterial(true)}
-            className="mb-4"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Material
-          </Button>
+      {/* Navigation Buttons */}
+      <div className="flex gap-4 mb-6">
+        <Button
+          variant={activeSection === 'materials' ? 'default' : 'outline'}
+          onClick={() => setActiveSection('materials')}
+          className="flex items-center"
+        >
+          <Package className="mr-2 h-4 w-4" />
+          Materials Management
+        </Button>
+        <Button
+          variant={activeSection === 'production' ? 'default' : 'outline'}
+          onClick={() => setActiveSection('production')}
+          className="flex items-center"
+        >
+          <ChefHat className="mr-2 h-4 w-4" />
+          Production and Recipe
+        </Button>
+      </div>
 
-          {showAddMaterial && (
-            <div className="border p-4 rounded-lg">
-              <AddMaterialForm
-                onAddMaterial={handleAddNewMaterial}
-                onCancel={() => setShowAddMaterial(false)}
-              />
-            </div>
-          )}
+      {/* Materials Management Section */}
+      {activeSection === 'materials' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Package className="mr-2 h-5 w-5" />
+              Materials Management
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button 
+              onClick={() => setShowAddMaterial(true)}
+              className="mb-4"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Material
+            </Button>
 
-          <div className="space-y-4">
-            {rawMaterials.map((material) => {
-              const status = getStockStatus(material);
-              
-              return (
-                <div key={material.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      {editingMaterialName === material.id ? (
-                        <div className="flex gap-1">
-                          <Input 
-                            value={newMaterialName}
-                            onChange={(e) => setNewMaterialName(e.target.value)}
-                            className="h-8 text-lg font-semibold"
-                            placeholder="Enter new name"
-                          />
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleRenameMaterial(material.id)}
-                            className="h-8 px-2 text-xs"
-                          >
-                            Save
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => {
-                              setEditingMaterialName('');
-                              setNewMaterialName('');
-                            }}
-                            className="h-8 px-2 text-xs"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <h3 className="font-semibold text-lg">{material.name}</h3>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => {
-                              setEditingMaterialName(material.id);
-                              setNewMaterialName(material.name);
-                            }}
-                            className="h-6 w-6 p-0"
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleDeleteMaterial(material.id)}
-                            className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                    <Badge variant={status === 'critical' ? 'destructive' : status === 'warning' ? 'secondary' : 'default'}>
-                      {status}
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-600">Current Stock</p>
-                      <p className="font-bold text-lg">
-                        {material.currentStock.toLocaleString()}{material.unit}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">Min Level</p>
-                      <p className="font-medium">
-                        {material.minStockLevel.toLocaleString()}{material.unit}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">Cost/Unit</p>
+            {showAddMaterial && (
+              <div className="border p-4 rounded-lg">
+                <AddMaterialForm
+                  onAddMaterial={handleAddNewMaterial}
+                  onCancel={() => setShowAddMaterial(false)}
+                />
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {rawMaterials.map((material) => {
+                const status = getStockStatus(material);
+                
+                return (
+                  <div key={material.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        {editingCost === material.id ? (
+                        {editingMaterialName === material.id ? (
                           <div className="flex gap-1">
                             <Input 
-                              type="number"
-                              step="0.01"
-                              value={newCost || ''}
-                              onChange={(e) => setNewCost(parseFloat(e.target.value) || 0)}
-                              className="w-20 h-6 text-xs"
+                              value={newMaterialName}
+                              onChange={(e) => setNewMaterialName(e.target.value)}
+                              className="h-8 text-lg font-semibold"
+                              placeholder="Enter new name"
                             />
                             <Button 
                               size="sm" 
-                              onClick={() => handleUpdateCost(material.id)}
-                              className="h-6 px-2 text-xs"
+                              onClick={() => handleRenameMaterial(material.id)}
+                              className="h-8 px-2 text-xs"
                             >
                               Save
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => {
+                                setEditingMaterialName('');
+                                setNewMaterialName('');
+                              }}
+                              className="h-8 px-2 text-xs"
+                            >
+                              Cancel
                             </Button>
                           </div>
                         ) : (
                           <>
-                            <p className="font-medium">₹{material.costPerUnit.toFixed(2)}</p>
+                            <h3 className="font-semibold text-lg">{material.name}</h3>
                             <Button 
                               variant="ghost" 
                               size="sm"
                               onClick={() => {
-                                setEditingCost(material.id);
-                                setNewCost(material.costPerUnit);
+                                setEditingMaterialName(material.id);
+                                setNewMaterialName(material.name);
                               }}
                               className="h-6 w-6 p-0"
                             >
                               <Edit className="h-3 w-3" />
                             </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteMaterial(material.id)}
+                              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </>
                         )}
                       </div>
+                      <Badge variant={status === 'critical' ? 'destructive' : status === 'warning' ? 'secondary' : 'default'}>
+                        {status}
+                      </Badge>
                     </div>
-                    <div>
-                      <p className="text-gray-600">Total Value</p>
-                      <p className="font-bold text-green-600">₹{(material.currentStock * material.costPerUnit).toFixed(2)}</p>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-600">Current Stock</p>
+                        <p className="font-bold text-lg">
+                          {material.currentStock.toLocaleString()}{material.unit}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Min Level</p>
+                        <p className="font-medium">
+                          {material.minStockLevel.toLocaleString()}{material.unit}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Cost/Unit</p>
+                        <div className="flex items-center gap-2">
+                          {editingCost === material.id ? (
+                            <div className="flex gap-1">
+                              <Input 
+                                type="number"
+                                step="0.01"
+                                value={newCost || ''}
+                                onChange={(e) => setNewCost(parseFloat(e.target.value) || 0)}
+                                className="w-20 h-6 text-xs"
+                              />
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleUpdateCost(material.id)}
+                                className="h-6 px-2 text-xs"
+                              >
+                                Save
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="font-medium">₹{material.costPerUnit.toFixed(2)}</p>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => {
+                                  setEditingCost(material.id);
+                                  setNewCost(material.costPerUnit);
+                                }}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Total Value</p>
+                        <p className="font-bold text-green-600">₹{(material.currentStock * material.costPerUnit).toFixed(2)}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Production and Recipe Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <ChefHat className="mr-2 h-5 w-5" />
-            Production and Recipe Management
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {renderProductSection(sweetProducts, 'Sweets', Candy, showAddSweet, setShowAddSweet, 'sweets')}
-          {renderProductSection(savouryProducts, 'Savouries', Coffee, showAddSavoury, setShowAddSavoury, 'savouries')}
-          {renderProductSection(bakeryProducts, 'Bakery', Cake, showAddBakery, setShowAddBakery, 'bakery')}
-        </CardContent>
-      </Card>
+      {/* Production and Recipe Management Section */}
+      {activeSection === 'production' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <ChefHat className="mr-2 h-5 w-5" />
+              Production and Recipe Management
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {renderProductSection(sweetProducts, 'Sweets', Candy, showAddSweet, setShowAddSweet, 'sweets')}
+            {renderProductSection(savouryProducts, 'Savouries', Coffee, showAddSavoury, setShowAddSavoury, 'savouries')}
+            {renderProductSection(bakeryProducts, 'Bakery', Cake, showAddBakery, setShowAddBakery, 'bakery')}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
