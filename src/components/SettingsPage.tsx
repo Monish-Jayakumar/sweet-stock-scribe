@@ -1,16 +1,17 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useInventory } from '@/hooks/useInventory';
-import { Plus, Package, Edit, Trash2, Lock, Candy, Coffee, Cake, ChefHat, ArrowRight } from 'lucide-react';
+import { Plus, Package, Edit, Trash2, Lock, Candy, Coffee, Cake, ChefHat, Minus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { AddMaterialForm } from './AddMaterialForm';
 import { AddProductForm } from './AddProductForm';
 
 export const SettingsPage = () => {
-  const { rawMaterials, products, getStockStatus, addNewMaterial, updateMaterialCost, renameMaterial, deleteMaterial, addNewProduct, renameProduct, deleteProduct } = useInventory();
+  const { rawMaterials, products, getStockStatus, addNewMaterial, updateMaterialCost, renameMaterial, deleteMaterial, addNewProduct, renameProduct, deleteProduct, adjustStock } = useInventory();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [password, setPassword] = useState<string>('');
   const [activeSection, setActiveSection] = useState<'materials' | 'production'>('materials');
@@ -20,7 +21,9 @@ export const SettingsPage = () => {
   const [showAddSavoury, setShowAddSavoury] = useState<boolean>(false);
   const [showAddBakery, setShowAddBakery] = useState<boolean>(false);
   const [editingCost, setEditingCost] = useState<string>('');
+  const [editingStock, setEditingStock] = useState<string>('');
   const [newCost, setNewCost] = useState<number>(0);
+  const [newStock, setNewStock] = useState<number>(0);
   const [editingMaterialName, setEditingMaterialName] = useState<string>('');
   const [editingProductName, setEditingProductName] = useState<string>('');
   const [newMaterialName, setNewMaterialName] = useState<string>('');
@@ -40,12 +43,6 @@ export const SettingsPage = () => {
         variant: "destructive"
       });
     }
-  };
-
-  // Navigate to production pages
-  const navigateToProduction = (section: 'sweets' | 'savouries' | 'bakery') => {
-    const event = new CustomEvent('navigate', { detail: `production-${section}` });
-    window.dispatchEvent(event);
   };
 
   const handleAddNewMaterial = (materialData: {
@@ -88,6 +85,26 @@ export const SettingsPage = () => {
     updateMaterialCost(materialId, newCost);
     setEditingCost('');
     setNewCost(0);
+  };
+
+  const handleUpdateStock = (materialId: string) => {
+    if (newStock < 0) {
+      toast({
+        title: "Invalid Input",
+        description: "Stock cannot be negative",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const material = rawMaterials.find(m => m.id === materialId);
+    if (material) {
+      const difference = newStock - material.currentStock;
+      const reason = difference > 0 ? 'Stock increase via settings' : 'Stock adjustment via settings';
+      adjustStock(materialId, newStock, reason);
+    }
+    setEditingStock('');
+    setNewStock(0);
   };
 
   const handleRenameMaterial = (materialId: string) => {
@@ -265,7 +282,7 @@ export const SettingsPage = () => {
           className="flex items-center"
         >
           <ChefHat className="mr-2 h-4 w-4" />
-          Production and Recipe
+          Recipe Management
         </Button>
       </div>
 
@@ -364,9 +381,43 @@ export const SettingsPage = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <p className="text-gray-600">Current Stock</p>
-                        <p className="font-bold text-lg">
-                          {material.currentStock.toLocaleString()}{material.unit}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          {editingStock === material.id ? (
+                            <div className="flex gap-1">
+                              <Input 
+                                type="number"
+                                step="0.01"
+                                value={newStock || ''}
+                                onChange={(e) => setNewStock(parseFloat(e.target.value) || 0)}
+                                className="w-24 h-6 text-xs"
+                              />
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleUpdateStock(material.id)}
+                                className="h-6 px-2 text-xs"
+                              >
+                                Save
+                              </Button>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="font-bold text-lg">
+                                {material.currentStock.toLocaleString()}{material.unit}
+                              </p>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => {
+                                  setEditingStock(material.id);
+                                  setNewStock(material.currentStock);
+                                }}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
                       <div>
                         <p className="text-gray-600">Min Level</p>
@@ -425,57 +476,9 @@ export const SettingsPage = () => {
         </Card>
       )}
 
-      {/* Production and Recipe Management Section */}
+      {/* Recipe Management Section */}
       {activeSection === 'production' && (
         <div className="space-y-6">
-          {/* Quick Navigation to Production Pages */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <ArrowRight className="mr-2 h-5 w-5" />
-                Go to Production
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button
-                  onClick={() => navigateToProduction('sweets')}
-                  className="flex items-center justify-center p-6 h-auto"
-                  variant="outline"
-                >
-                  <div className="text-center">
-                    <Candy className="mx-auto mb-2 h-8 w-8" />
-                    <div className="font-semibold">Sweets Production</div>
-                    <div className="text-sm text-gray-500">Manage sweets production</div>
-                  </div>
-                </Button>
-                <Button
-                  onClick={() => navigateToProduction('savouries')}
-                  className="flex items-center justify-center p-6 h-auto"
-                  variant="outline"
-                >
-                  <div className="text-center">
-                    <Coffee className="mx-auto mb-2 h-8 w-8" />
-                    <div className="font-semibold">Savouries Production</div>
-                    <div className="text-sm text-gray-500">Manage savouries production</div>
-                  </div>
-                </Button>
-                <Button
-                  onClick={() => navigateToProduction('bakery')}
-                  className="flex items-center justify-center p-6 h-auto"
-                  variant="outline"
-                >
-                  <div className="text-center">
-                    <Cake className="mx-auto mb-2 h-8 w-8" />
-                    <div className="font-semibold">Bakery Production</div>
-                    <div className="text-sm text-gray-500">Manage bakery production</div>
-                  </div>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recipe Management */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">

@@ -13,6 +13,7 @@ interface InventoryContextType {
   checkStockAvailability: (productId: string, quantity?: number) => { canProduce: boolean; shortages: any[] };
   produceProduct: (productId: string, quantity?: number, notes?: string) => boolean;
   addStock: (materialId: string, quantity: number, purchasePrice?: number, notes?: string) => void;
+  adjustStock: (materialId: string, newStock: number, reason: string) => void;
   addNewMaterial: (materialData: any) => boolean;
   addNewProduct: (productData: any) => boolean;
   updateMaterialCost: (materialId: string, newCost: number) => void;
@@ -28,13 +29,22 @@ const InventoryContext = createContext<InventoryContextType | undefined>(undefin
 
 export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { rawMaterials, setRawMaterials, addStock: addStockToMaterial, addNewMaterial, updateMaterialStock, updateMaterialCost, renameMaterial, deleteMaterial } = useRawMaterials();
-  const { addStockTransaction, addProductionTransaction, transactions, setTransactions } = useTransactions();
+  const { addStockTransaction, addProductionTransaction, addAdjustmentTransaction, transactions, setTransactions } = useTransactions();
   const { products, setProducts, productionLogs, setProductionLogs, checkStockAvailability, produceProduct: produceProductBase, addNewProduct, renameProduct, deleteProduct } = useProduction(rawMaterials, updateMaterialStock);
 
   const addStock = (materialId: string, quantity: number, purchasePrice?: number, notes?: string) => {
     console.log('Adding stock:', materialId, quantity, purchasePrice, notes);
     addStockToMaterial(materialId, quantity, purchasePrice, notes);
     addStockTransaction(materialId, quantity, purchasePrice, notes);
+  };
+
+  const adjustStock = (materialId: string, newStock: number, reason: string) => {
+    const material = rawMaterials.find(m => m.id === materialId);
+    if (!material) return;
+
+    const difference = newStock - material.currentStock;
+    updateMaterialStock(materialId, newStock);
+    addAdjustmentTransaction(materialId, difference, reason);
   };
 
   const produceProduct = (productId: string, quantity: number = 1, notes?: string): boolean => {
@@ -66,6 +76,7 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     checkStockAvailability,
     produceProduct,
     addStock,
+    adjustStock,
     addNewMaterial,
     addNewProduct,
     updateMaterialCost,

@@ -38,11 +38,22 @@ export const useTransactions = () => {
     });
   };
 
+  const addAdjustmentTransaction = (materialId: string, quantity: number, reason: string) => {
+    return addTransaction({
+      type: 'adjustment',
+      materialId,
+      quantity,
+      notes: reason,
+      userId: 'current-user'
+    });
+  };
+
   return {
     transactions,
     setTransactions,
     addTransaction,
     addStockTransaction,
-    addProductionTransaction
+    addProductionTransaction,
+    addAdjustmentTransaction
   };
 };
