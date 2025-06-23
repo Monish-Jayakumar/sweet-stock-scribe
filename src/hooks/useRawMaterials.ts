@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { RawMaterial } from '@/types';
 import { initialRawMaterials } from '@/data/initialInventoryData';
@@ -7,21 +6,37 @@ import { toast } from '@/hooks/use-toast';
 export const useRawMaterials = () => {
   const [rawMaterials, setRawMaterials] = useState<RawMaterial[]>(initialRawMaterials);
 
-  const addStock = (materialId: string, quantity: number, notes?: string) => {
+  const addStock = (materialId: string, quantity: number, purchasePrice?: number, notes?: string) => {
     setRawMaterials(prev => prev.map(material => {
       if (material.id === materialId) {
+        let newCostPerUnit = material.costPerUnit;
+        
+        // Calculate weighted average cost if purchase price is provided
+        if (purchasePrice && purchasePrice > 0) {
+          const currentValue = material.currentStock * material.costPerUnit;
+          const newValue = quantity * purchasePrice;
+          const totalStock = material.currentStock + quantity;
+          newCostPerUnit = totalStock > 0 ? (currentValue + newValue) / totalStock : purchasePrice;
+        }
+
         return {
           ...material,
           currentStock: material.currentStock + quantity,
+          costPerUnit: newCostPerUnit,
           lastUpdated: new Date()
         };
       }
       return material;
     }));
 
+    const material = rawMaterials.find(m => m.id === materialId);
+    const costInfo = purchasePrice && purchasePrice > 0 
+      ? ` at ₹${purchasePrice}/${material?.unit} (new avg: ₹${((material?.currentStock || 0) * (material?.costPerUnit || 0) + quantity * purchasePrice) / ((material?.currentStock || 0) + quantity)})`
+      : '';
+
     toast({
       title: "Stock Added",
-      description: `${quantity} units added to inventory`,
+      description: `${quantity} units added to inventory${costInfo}`,
     });
   };
 

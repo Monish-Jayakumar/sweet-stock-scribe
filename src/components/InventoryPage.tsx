@@ -1,17 +1,17 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useInventory } from '@/hooks/useInventory';
-import { Plus, Package, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plus, Package, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export const InventoryPage = () => {
   const { rawMaterials, addStock, getStockStatus, transactions } = useInventory();
   const [selectedMaterial, setSelectedMaterial] = useState<string>('');
   const [addQuantity, setAddQuantity] = useState<number>(0);
+  const [purchasePrice, setPurchasePrice] = useState<number>(0);
   const [notes, setNotes] = useState<string>('');
 
   const handleAddStock = () => {
@@ -24,13 +24,28 @@ export const InventoryPage = () => {
       return;
     }
     
-    addStock(selectedMaterial, addQuantity, notes);
+    addStock(selectedMaterial, addQuantity, purchasePrice > 0 ? purchasePrice : undefined, notes);
     setAddQuantity(0);
+    setPurchasePrice(0);
     setNotes('');
     setSelectedMaterial('');
   };
 
+  const selectedMaterialData = rawMaterials.find(m => m.id === selectedMaterial);
   const materialTransactions = transactions.filter(t => t.materialId).slice(0, 20);
+
+  // Calculate new weighted average cost preview
+  const calculateNewAverageCost = () => {
+    if (!selectedMaterialData || addQuantity <= 0 || purchasePrice <= 0) return null;
+    
+    const currentValue = selectedMaterialData.currentStock * selectedMaterialData.costPerUnit;
+    const newValue = addQuantity * purchasePrice;
+    const totalStock = selectedMaterialData.currentStock + addQuantity;
+    
+    return totalStock > 0 ? (currentValue + newValue) / totalStock : purchasePrice;
+  };
+
+  const newAverageCost = calculateNewAverageCost();
 
   return (
     <div className="p-6 space-y-6">
@@ -61,7 +76,7 @@ export const InventoryPage = () => {
                 <option value="">Choose material...</option>
                 {rawMaterials.map(material => (
                   <option key={material.id} value={material.id}>
-                    {material.name} (Current: {material.currentStock.toLocaleString()}{material.unit})
+                    {material.name} (Stock: {material.currentStock.toLocaleString()}{material.unit})
                   </option>
                 ))}
               </select>
@@ -79,7 +94,26 @@ export const InventoryPage = () => {
               />
               {selectedMaterial && (
                 <p className="text-sm text-gray-500 mt-1">
-                  Unit: {rawMaterials.find(m => m.id === selectedMaterial)?.unit}
+                  Unit: {selectedMaterialData?.unit}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Purchase Price per Unit (Optional)
+              </label>
+              <Input 
+                type="number"
+                step="0.01"
+                min="0"
+                value={purchasePrice || ''}
+                onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)}
+                placeholder="Enter purchase price"
+              />
+              {selectedMaterialData && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Current avg cost: ₹{selectedMaterialData.costPerUnit.toFixed(2)}/{selectedMaterialData.unit}
                 </p>
               )}
             </div>
@@ -94,19 +128,27 @@ export const InventoryPage = () => {
             </div>
 
             {selectedMaterial && addQuantity > 0 && (
-              <div className="bg-blue-50 p-3 rounded-lg">
+              <div className="bg-blue-50 p-3 rounded-lg space-y-2">
                 <p className="text-sm font-medium">Stock Update Preview:</p>
                 <p className="text-sm text-gray-600">
-                  {rawMaterials.find(m => m.id === selectedMaterial)?.name}
+                  {selectedMaterialData?.name}
                 </p>
-                <p className="text-sm">
-                  {rawMaterials.find(m => m.id === selectedMaterial)?.currentStock.toLocaleString()} 
-                  → {((rawMaterials.find(m => m.id === selectedMaterial)?.currentStock || 0) + addQuantity).toLocaleString()}
-                  {rawMaterials.find(m => m.id === selectedMaterial)?.unit}
-                </p>
-                <p className="text-sm text-green-600 font-medium">
-                  Cost: ₹{((rawMaterials.find(m => m.id === selectedMaterial)?.costPerUnit || 0) * addQuantity).toFixed(2)}
-                </p>
+                <div className="text-sm space-y-1">
+                  <p>
+                    Stock: {selectedMaterialData?.currentStock.toLocaleString()} 
+                    → {((selectedMaterialData?.currentStock || 0) + addQuantity).toLocaleString()}
+                    {selectedMaterialData?.unit}
+                  </p>
+                  {purchasePrice > 0 && newAverageCost && (
+                    <p className="text-blue-600">
+                      Avg Cost: ₹{selectedMaterialData?.costPerUnit.toFixed(2)} 
+                      → ₹{newAverageCost.toFixed(2)}/{selectedMaterialData?.unit}
+                    </p>
+                  )}
+                  <p className="text-green-600 font-medium">
+                    Purchase Cost: ₹{(purchasePrice > 0 ? purchasePrice * addQuantity : (selectedMaterialData?.costPerUnit || 0) * addQuantity).toFixed(2)}
+                  </p>
+                </div>
               </div>
             )}
 
@@ -157,7 +199,7 @@ export const InventoryPage = () => {
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Cost/Unit</p>
+                        <p className="text-gray-600">Avg Cost/Unit</p>
                         <p className="font-medium">₹{material.costPerUnit.toFixed(2)}</p>
                       </div>
                       <div>
@@ -230,6 +272,12 @@ export const InventoryPage = () => {
                       <p className={`font-bold ${transaction.quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {transaction.quantity > 0 ? '+' : ''}{transaction.quantity.toLocaleString()}{material?.unit}
                       </p>
+                      {transaction.purchasePrice && transaction.type === 'purchase' && (
+                        <p className="text-sm text-blue-600 flex items-center">
+                          <DollarSign className="h-3 w-3 mr-1" />
+                          ₹{transaction.purchasePrice.toFixed(2)}/{material?.unit}
+                        </p>
+                      )}
                       <Badge variant="outline" className="mt-1">
                         {transaction.type}
                       </Badge>

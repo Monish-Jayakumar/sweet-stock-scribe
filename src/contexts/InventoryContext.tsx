@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useRawMaterials } from '@/hooks/useRawMaterials';
 import { useProduction } from '@/hooks/useProduction';
@@ -13,7 +12,7 @@ interface InventoryContextType {
   productionLogs: ProductionLog[];
   checkStockAvailability: (productId: string, quantity?: number) => { canProduce: boolean; shortages: any[] };
   produceProduct: (productId: string, quantity?: number, notes?: string) => boolean;
-  addStock: (materialId: string, quantity: number, notes?: string) => void;
+  addStock: (materialId: string, quantity: number, purchasePrice?: number, notes?: string) => void;
   addNewMaterial: (materialData: any) => boolean;
   addNewProduct: (productData: any) => boolean;
   updateMaterialCost: (materialId: string, newCost: number) => void;
@@ -32,10 +31,10 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   const { addStockTransaction, addProductionTransaction, transactions, setTransactions } = useTransactions();
   const { products, setProducts, productionLogs, setProductionLogs, checkStockAvailability, produceProduct: produceProductBase, addNewProduct, renameProduct, deleteProduct } = useProduction(rawMaterials, updateMaterialStock);
 
-  const addStock = (materialId: string, quantity: number, notes?: string) => {
-    console.log('Adding stock:', materialId, quantity, notes);
-    addStockToMaterial(materialId, quantity, notes);
-    addStockTransaction(materialId, quantity, notes);
+  const addStock = (materialId: string, quantity: number, purchasePrice?: number, notes?: string) => {
+    console.log('Adding stock:', materialId, quantity, purchasePrice, notes);
+    addStockToMaterial(materialId, quantity, purchasePrice, notes);
+    addStockTransaction(materialId, quantity, purchasePrice, notes);
   };
 
   const produceProduct = (productId: string, quantity: number = 1, notes?: string): boolean => {

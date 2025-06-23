@@ -28,6 +28,7 @@ export interface StockTransaction {
   materialId?: string;
   productId?: string;
   quantity: number;
+  purchasePrice?: number; // New field for purchase transactions
   timestamp: Date;
   notes?: string;
   userId: string;

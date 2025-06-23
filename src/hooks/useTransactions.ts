@@ -16,11 +16,12 @@ export const useTransactions = () => {
     return newTransaction;
   };
 
-  const addStockTransaction = (materialId: string, quantity: number, notes?: string) => {
+  const addStockTransaction = (materialId: string, quantity: number, purchasePrice?: number, notes?: string) => {
     return addTransaction({
       type: 'purchase',
       materialId,
       quantity,
+      purchasePrice,
       notes,
       userId: 'current-user'
     });
