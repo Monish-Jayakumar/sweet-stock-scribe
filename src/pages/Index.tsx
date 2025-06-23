@@ -29,6 +29,7 @@ const Index = () => {
         return <Dashboard />;
       case 'inventory':
         return <InventoryPage />;
+      case 'production':
       case 'production-sweets':
         return <ProductionPage activeSection="sweets" />;
       case 'production-savouries':

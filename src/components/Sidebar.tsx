@@ -35,6 +35,13 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
+  const handleProductionClick = () => {
+    // If not already in a production section, default to sweets
+    if (!activeTab.startsWith('production')) {
+      setActiveTab('production-sweets');
+    }
+  };
+
   return (
     <div className="w-64 bg-white shadow-lg h-full">
       <div className="p-6 border-b">
@@ -54,7 +61,7 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => !hasSubmenu && setActiveTab(item.id)}
+                  onClick={() => hasSubmenu ? handleProductionClick() : setActiveTab(item.id)}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
                     (activeTab === item.id || (item.id === 'production' && isProductionActive))
                       ? 'bg-blue-100 text-blue-700 border-r-4 border-blue-700'
@@ -65,7 +72,7 @@ export const Sidebar = ({ activeTab, setActiveTab }: SidebarProps) => {
                   <span className="font-medium">{item.label}</span>
                 </button>
                 
-                {hasSubmenu && (item.id === 'production' && isProductionActive) && (
+                {hasSubmenu && isProductionActive && (
                   <ul className="ml-8 mt-2 space-y-1">
                     {item.submenu.map((subItem) => {
                       const SubIcon = subItem.icon;
